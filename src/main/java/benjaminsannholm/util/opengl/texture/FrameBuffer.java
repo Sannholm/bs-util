@@ -1,7 +1,5 @@
 package benjaminsannholm.util.opengl.texture;
 
-import static org.lwjgl.system.MemoryStack.stackPush;
-
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,22 +33,22 @@ public class FrameBuffer extends GraphicsObject
     {
         setHandle(GLAPI.createFramebuffer());
         
-        try (MemoryStack stack = stackPush())
+        try (MemoryStack stack = MemoryStack.stackPush())
         {
             final IntBuffer drawBuffers = stack.mallocInt(colorAttachments.size());
             for (int i = 0; i < colorAttachments.size(); i++)
             {
                 final int bufferId = GL30.GL_COLOR_ATTACHMENT0 + i;
                 final Texture texture = colorAttachments.get(i);
-                GLAPI.setFramebufferAttachment(getHandle(), bufferId, texture.getHandle());
+                GLAPI.setFramebufferAttachment(getHandle(), bufferId, texture.getHandle(), 0);
                 drawBuffers.put(bufferId);
             }
-            drawBuffers.rewind();
+            drawBuffers.flip();
             GLAPI.setDrawBuffers(getHandle(), drawBuffers);
         }
         
         if (depthTexture != null)
-            GLAPI.setFramebufferAttachment(getHandle(), GL30.GL_DEPTH_ATTACHMENT, depthTexture.getHandle());
+            GLAPI.setFramebufferAttachment(getHandle(), GL30.GL_DEPTH_ATTACHMENT, depthTexture.getHandle(), 0);
         
         checkComplete();
     }

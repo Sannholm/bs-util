@@ -1,7 +1,5 @@
 package benjaminsannholm.util.opengl.shader.uniforms;
 
-import static org.lwjgl.system.MemoryStack.stackPush;
-
 import java.nio.FloatBuffer;
 
 import org.lwjgl.system.MemoryStack;
@@ -17,11 +15,11 @@ public class Matrix4Uniform extends Uniform<Matrix4>
     {
         super(parent, name);
     }
-    
+
     @Override
     protected void upload(Matrix4 value)
     {
-        try (MemoryStack stack = stackPush())
+        try (MemoryStack stack = MemoryStack.stackPush())
         {
             final FloatBuffer buffer = stack.mallocFloat(16);
             value.writeTo(buffer);

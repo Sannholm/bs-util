@@ -31,7 +31,7 @@ public class Texture2D extends Texture
     protected void create()
     {
         super.create();
-        GLAPI.initTextureImage(getHandle(), getType().getTarget(), getLevels(), getFormat().getInternalFormat(), getWidth(), getHeight(), 0);
+        GLAPI.initTextureImage(getHandle(), getType().getEnum(), getLevels(), getFormat().getInternalFormat(), getWidth(), getHeight(), 0);
         uploadParameters();
     }
     
@@ -44,8 +44,8 @@ public class Texture2D extends Texture
     protected void uploadParameters()
     {
         super.uploadParameters();
-        GLAPI.setTextureParameteri(getHandle(), getType().getTarget(), GL11.GL_TEXTURE_WRAP_S, getWrapS().getEnum());
-        GLAPI.setTextureParameteri(getHandle(), getType().getTarget(), GL11.GL_TEXTURE_WRAP_T, getWrapT().getEnum());
+        GLAPI.setTextureParameteri(getHandle(), getType().getEnum(), GL11.GL_TEXTURE_WRAP_S, getWrapS().getEnum());
+        GLAPI.setTextureParameteri(getHandle(), getType().getEnum(), GL11.GL_TEXTURE_WRAP_T, getWrapT().getEnum());
     }
     
     @Override

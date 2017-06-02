@@ -3,7 +3,7 @@ apply plugin: 'java-library'
 group 'benjaminsannholm'
 version '1.0.0'
 
-project.ext.lwjglVersion = '3.1.2-SNAPSHOT'
+project.ext.lwjglVersion = '3.1.2'
 
 repositories {
     jcenter()
@@ -20,7 +20,7 @@ dependencies {
     
 	// LWJGL
 	implementation "org.lwjgl:lwjgl:${lwjglVersion}"
-	implementation "org.lwjgl:lwjgl-glfw:${lwjglVersion}"
 	implementation "org.lwjgl:lwjgl-opengl:${lwjglVersion}"
+	implementation "org.lwjgl:lwjgl-opencl:${lwjglVersion}"
 	implementation "org.lwjgl:lwjgl-tinyexr:${lwjglVersion}"
 }

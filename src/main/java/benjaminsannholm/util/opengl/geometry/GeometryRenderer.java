@@ -2,6 +2,7 @@ package benjaminsannholm.util.opengl.geometry;
 
 import java.util.List;
 
+import benjaminsannholm.util.opengl.BufferObject;
 import benjaminsannholm.util.opengl.GLAPI;
 import benjaminsannholm.util.opengl.geometry.VertexFormat.VertexAttribute;
 
@@ -10,7 +11,7 @@ public final class GeometryRenderer
     // TODO: Don't use a global VAO
     private static VertexArrayObject GLOBAL_VAO;
     
-    public static void render(RenderMode mode, VertexFormat format, VertexBufferObject vbo, int start, int count)
+    public static void render(RenderMode mode, VertexFormat format, BufferObject vbo, int start, int count)
     {
         if (GLOBAL_VAO == null)
             GLOBAL_VAO = new VertexArrayObject();
@@ -31,8 +32,5 @@ public final class GeometryRenderer
         
         for (int i = 0; i < attributes.size(); i++)
             GLAPI.disableVertexAttribArray(GLOBAL_VAO.getHandle(), i);
-        
-        VertexArrayObject.unbind();
-        VertexBufferObject.unbind();
     }
 }

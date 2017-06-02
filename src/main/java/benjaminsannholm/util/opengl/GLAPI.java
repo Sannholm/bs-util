@@ -1,6 +1,5 @@
 package benjaminsannholm.util.opengl;
 
-import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 import java.nio.ByteBuffer;
@@ -36,6 +35,28 @@ public final class GLAPI
     private static final Logger LOGGER = LoggerFactory.getLogger(GLAPI.class);
     
     private static final boolean DEBUG_PRINTING = true;
+    
+    private static final boolean USE_DSA = true;
+    
+    private static boolean DSA_GL45(GLCapabilities caps)
+    {
+        return caps.OpenGL45 && USE_DSA;
+    }
+
+    private static boolean DSA_ARB(GLCapabilities caps)
+    {
+        return caps.GL_ARB_direct_state_access && USE_DSA;
+    }
+
+    private static boolean DSA_EXT(GLCapabilities caps)
+    {
+        return caps.GL_EXT_direct_state_access && USE_DSA;
+    }
+
+    private static boolean TEXTURE_STORAGE_ARB(GLCapabilities caps)
+    {
+        return caps.GL_ARB_texture_storage;
+    }
     
     public static void setupDebugPrinting()
     {
@@ -194,9 +215,9 @@ public final class GLAPI
     public static int createQuery(int target)
     {
         final GLCapabilities caps = GL.getCapabilities();
-        if (caps.OpenGL45)
+        if (DSA_GL45(caps))
             return GL45.glCreateQueries(target);
-        if (caps.GL_ARB_direct_state_access)
+        if (DSA_ARB(caps))
             return ARBDirectStateAccess.glCreateQueries(target);
         return GL15.glGenQueries();
     }
@@ -224,13 +245,12 @@ public final class GLAPI
     public static int createFramebuffer()
     {
         final GLCapabilities caps = GL.getCapabilities();
-        if (caps.OpenGL45)
+        if (DSA_GL45(caps))
             return GL45.glCreateFramebuffers();
-        if (caps.GL_ARB_direct_state_access)
+        if (DSA_ARB(caps))
             return ARBDirectStateAccess.glCreateFramebuffers();
         final int handle = GL30.glGenFramebuffers();
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, handle);
-        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
         return handle;
     }
     
@@ -247,15 +267,15 @@ public final class GLAPI
     public static void setFramebufferAttachment(int framebuffer, int attachment, int texture, int level)
     {
         final GLCapabilities caps = GL.getCapabilities();
-        if (caps.OpenGL45)
+        if (DSA_GL45(caps))
         {
             GL45.glNamedFramebufferTexture(framebuffer, attachment, texture, level);
         }
-        else if (caps.GL_ARB_direct_state_access)
+        else if (DSA_ARB(caps))
         {
             ARBDirectStateAccess.glNamedFramebufferTexture(framebuffer, attachment, texture, level);
         }
-        else if (caps.GL_EXT_direct_state_access)
+        else if (DSA_EXT(caps))
         {
             EXTDirectStateAccess.glNamedFramebufferTextureEXT(framebuffer, attachment, texture, level);
         }
@@ -266,23 +286,18 @@ public final class GLAPI
         }
     }
     
-    public static void setFramebufferAttachment(int framebuffer, int attachment, int texture)
-    {
-        setFramebufferAttachment(framebuffer, attachment, texture, 0);
-    }
-    
     public static void setDrawBuffers(int framebuffer, IntBuffer bufs)
     {
         final GLCapabilities caps = GL.getCapabilities();
-        if (caps.OpenGL45)
+        if (DSA_GL45(caps))
         {
             GL45.glNamedFramebufferDrawBuffers(framebuffer, bufs);
         }
-        else if (caps.GL_ARB_direct_state_access)
+        else if (DSA_ARB(caps))
         {
             ARBDirectStateAccess.glNamedFramebufferDrawBuffers(framebuffer, bufs);
         }
-        else if (caps.GL_EXT_direct_state_access)
+        else if (DSA_EXT(caps))
         {
             EXTDirectStateAccess.glFramebufferDrawBuffersEXT(framebuffer, bufs);
         }
@@ -296,11 +311,11 @@ public final class GLAPI
     public static int checkFramebufferStatus(int framebuffer)
     {
         final GLCapabilities caps = GL.getCapabilities();
-        if (caps.OpenGL45)
+        if (DSA_GL45(caps))
             return GL45.glCheckNamedFramebufferStatus(framebuffer, GL30.GL_FRAMEBUFFER);
-        if (caps.GL_ARB_direct_state_access)
+        if (DSA_ARB(caps))
             return ARBDirectStateAccess.glCheckNamedFramebufferStatus(framebuffer, GL30.GL_FRAMEBUFFER);
-        if (caps.GL_EXT_direct_state_access)
+        if (DSA_EXT(caps))
             return EXTDirectStateAccess.glCheckNamedFramebufferStatusEXT(framebuffer, GL30.GL_FRAMEBUFFER);
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, framebuffer);
         return GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER);
@@ -308,16 +323,16 @@ public final class GLAPI
     
     public static void clearBufferColor(int framebuffer, int drawbuffer, float r, float g, float b, float a)
     {
-        try (MemoryStack stack = stackPush())
+        try (MemoryStack stack = MemoryStack.stackPush())
         {
             final FloatBuffer value = stack.floats(r, g, b, a);
             
             final GLCapabilities caps = GL.getCapabilities();
-            if (caps.OpenGL45)
+            if (DSA_GL45(caps))
             {
                 GL45.glClearNamedFramebufferfv(framebuffer, GL11.GL_COLOR, drawbuffer, value);
             }
-            else if (caps.GL_ARB_direct_state_access)
+            else if (DSA_ARB(caps))
             {
                 ARBDirectStateAccess.glClearNamedFramebufferfv(framebuffer, GL11.GL_COLOR, drawbuffer, value);
             }
@@ -331,16 +346,16 @@ public final class GLAPI
     
     public static void clearBufferDepth(int framebuffer, float depth)
     {
-        try (MemoryStack stack = stackPush())
+        try (MemoryStack stack = MemoryStack.stackPush())
         {
             final FloatBuffer value = stack.floats(depth);
             
             final GLCapabilities caps = GL.getCapabilities();
-            if (caps.OpenGL45)
+            if (DSA_GL45(caps))
             {
                 GL45.glClearNamedFramebufferfv(framebuffer, GL11.GL_DEPTH, 0, value);
             }
-            else if (caps.GL_ARB_direct_state_access)
+            else if (DSA_ARB(caps))
             {
                 ARBDirectStateAccess.glClearNamedFramebufferfv(framebuffer, GL11.GL_DEPTH, 0, value);
             }
@@ -355,13 +370,12 @@ public final class GLAPI
     public static int createTexture(int target)
     {
         final GLCapabilities caps = GL.getCapabilities();
-        if (caps.OpenGL45)
+        if (DSA_GL45(caps))
             return GL45.glCreateTextures(target);
-        if (caps.GL_ARB_direct_state_access)
+        if (DSA_ARB(caps))
             return ARBDirectStateAccess.glCreateTextures(target);
         final int handle = GL11.glGenTextures();
         GL11.glBindTexture(target, handle);
-        GL11.glBindTexture(target, 0);
         return handle;
     }
     
@@ -373,15 +387,15 @@ public final class GLAPI
     public static void bindTexture(int target, int unit, int texture)
     {
         final GLCapabilities caps = GL.getCapabilities();
-        if (caps.OpenGL45)
+        if (DSA_GL45(caps))
         {
             GL45.glBindTextureUnit(unit, texture);
         }
-        else if (caps.GL_ARB_direct_state_access)
+        else if (DSA_ARB(caps))
         {
             ARBDirectStateAccess.glBindTextureUnit(unit, texture);
         }
-        else if (caps.GL_EXT_direct_state_access)
+        else if (DSA_EXT(caps))
         {
             EXTDirectStateAccess.glBindMultiTextureEXT(GL13.GL_TEXTURE0 + unit, target, texture);
         }
@@ -397,26 +411,21 @@ public final class GLAPI
         GL42.glBindImageTexture(unit, texture, level, layered, layer, access, format);
     }
     
-    public static void bindImageTexture(int unit, int texture, int access, int format)
-    {
-        bindImageTexture(unit, texture, 0, false, 0, access, format);
-    }
-    
     public static void initTextureImage(int texture, int target, int levels, int internalFormat, int width, int height, int depth)
     {
         final GLCapabilities caps = GL.getCapabilities();
         switch (target)
         {
             case GL11.GL_TEXTURE_2D:
-                if (caps.OpenGL45)
+                if (DSA_GL45(caps))
                 {
                     GL45.glTextureStorage2D(texture, levels, internalFormat, width, height);
                 }
-                else if (caps.GL_ARB_direct_state_access)
+                else if (DSA_ARB(caps))
                 {
                     ARBDirectStateAccess.glTextureStorage2D(texture, levels, internalFormat, width, height);
                 }
-                else if (caps.GL_ARB_texture_storage)
+                else if (DSA_EXT(caps) && TEXTURE_STORAGE_ARB(caps))
                 {
                     ARBTextureStorage.glTextureStorage2DEXT(texture, target, levels, internalFormat, width, height);
                 }
@@ -427,15 +436,15 @@ public final class GLAPI
                 }
                 break;
             case GL12.GL_TEXTURE_3D:
-                if (caps.OpenGL45)
+                if (DSA_GL45(caps))
                 {
                     GL45.glTextureStorage3D(texture, levels, internalFormat, width, height, depth);
                 }
-                else if (caps.GL_ARB_direct_state_access)
+                else if (DSA_ARB(caps))
                 {
                     ARBDirectStateAccess.glTextureStorage3D(texture, levels, internalFormat, width, height, depth);
                 }
-                else if (caps.GL_ARB_texture_storage)
+                else if (DSA_EXT(caps) && TEXTURE_STORAGE_ARB(caps))
                 {
                     ARBTextureStorage.glTextureStorage3DEXT(texture, target, levels, internalFormat, width, height, depth);
                 }
@@ -453,15 +462,15 @@ public final class GLAPI
     public static void setTextureParameteri(int texture, int target, int param, int value)
     {
         final GLCapabilities caps = GL.getCapabilities();
-        if (caps.OpenGL45)
+        if (DSA_GL45(caps))
         {
             GL45.glTextureParameteri(texture, param, value);
         }
-        else if (caps.GL_ARB_direct_state_access)
+        else if (DSA_ARB(caps))
         {
             ARBDirectStateAccess.glTextureParameteri(texture, param, value);
         }
-        else if (caps.GL_EXT_direct_state_access)
+        else if (DSA_EXT(caps))
         {
             EXTDirectStateAccess.glTextureParameteriEXT(texture, target, param, value);
         }
@@ -478,15 +487,15 @@ public final class GLAPI
         switch (target)
         {
             case GL11.GL_TEXTURE_2D:
-                if (caps.OpenGL45)
+                if (DSA_GL45(caps))
                 {
                     GL45.glTextureSubImage2D(texture, level, x, y, width, height, format, type, buffer);
                 }
-                else if (caps.GL_ARB_direct_state_access)
+                else if (DSA_ARB(caps))
                 {
                     ARBDirectStateAccess.glTextureSubImage2D(texture, level, x, y, width, height, format, type, buffer);
                 }
-                else if (caps.GL_EXT_direct_state_access)
+                else if (DSA_EXT(caps))
                 {
                     EXTDirectStateAccess.glTextureSubImage2DEXT(texture, target, level, x, y, width, height, format, type, buffer);
                 }
@@ -497,15 +506,15 @@ public final class GLAPI
                 }
                 break;
             case GL12.GL_TEXTURE_3D:
-                if (caps.OpenGL45)
+                if (DSA_GL45(caps))
                 {
                     GL45.glTextureSubImage3D(texture, level, x, y, z, width, height, depth, format, type, buffer);
                 }
-                else if (caps.GL_ARB_direct_state_access)
+                else if (DSA_ARB(caps))
                 {
                     ARBDirectStateAccess.glTextureSubImage3D(texture, level, x, y, z, width, height, depth, format, type, buffer);
                 }
-                else if (caps.GL_EXT_direct_state_access)
+                else if (DSA_EXT(caps))
                 {
                     EXTDirectStateAccess.glTextureSubImage3DEXT(texture, target, level, x, y, z, width, height, depth, format, type, buffer);
                 }
@@ -523,15 +532,15 @@ public final class GLAPI
     public static void generateTextureMipmaps(int texture, int target)
     {
         final GLCapabilities caps = GL.getCapabilities();
-        if (caps.OpenGL45)
+        if (DSA_GL45(caps))
         {
             GL45.glGenerateTextureMipmap(texture);
         }
-        else if (caps.GL_ARB_direct_state_access)
+        else if (DSA_ARB(caps))
         {
             ARBDirectStateAccess.glGenerateTextureMipmap(texture);
         }
-        else if (caps.GL_EXT_direct_state_access)
+        else if (DSA_EXT(caps))
         {
             EXTDirectStateAccess.glGenerateTextureMipmapEXT(texture, target);
         }
@@ -730,9 +739,9 @@ public final class GLAPI
     public static int createBuffer()
     {
         final GLCapabilities caps = GL.getCapabilities();
-        if (caps.OpenGL45)
+        if (DSA_GL45(caps))
             return GL45.glCreateBuffers();
-        if (caps.GL_ARB_direct_state_access)
+        if (DSA_ARB(caps))
             return ARBDirectStateAccess.glCreateBuffers();
         return GL15.glGenBuffers(); // No need to bind
     }
@@ -746,20 +755,25 @@ public final class GLAPI
     {
         GL15.glBindBuffer(target, buffer);
     }
+
+    public static void bindBufferIndexed(int buffer, int target, int index, int offset, int length)
+    {
+        GL30.glBindBufferRange(target, index, buffer, offset, length);
+    }
     
     // TODO: Buffer storage
     public static void initBufferData(int buffer, int target, int size, int usage)
     {
         final GLCapabilities caps = GL.getCapabilities();
-        if (caps.OpenGL45)
+        if (DSA_GL45(caps))
         {
             GL45.glNamedBufferData(buffer, size, usage);
         }
-        else if (caps.GL_ARB_direct_state_access)
+        else if (DSA_ARB(caps))
         {
             ARBDirectStateAccess.glNamedBufferData(buffer, size, usage);
         }
-        else if (caps.GL_EXT_direct_state_access)
+        else if (DSA_EXT(caps))
         {
             EXTDirectStateAccess.glNamedBufferDataEXT(buffer, size, usage);
         }
@@ -773,11 +787,11 @@ public final class GLAPI
     public static ByteBuffer mapBuffer(int buffer, int target, int access, int offset, int length)
     {
         final GLCapabilities caps = GL.getCapabilities();
-        if (caps.OpenGL45)
+        if (DSA_GL45(caps))
             return GL45.glMapNamedBufferRange(buffer, offset, length, access);
-        if (caps.GL_ARB_direct_state_access)
+        if (DSA_ARB(caps))
             return ARBDirectStateAccess.glMapNamedBufferRange(buffer, offset, length, access);
-        if (caps.GL_EXT_direct_state_access)
+        if (DSA_EXT(caps))
             return EXTDirectStateAccess.glMapNamedBufferRangeEXT(buffer, offset, length, access);
         GL15.glBindBuffer(target, buffer);
         return GL30.glMapBufferRange(target, offset, length, access);
@@ -786,11 +800,11 @@ public final class GLAPI
     public static boolean unmapBuffer(int buffer, int target)
     {
         final GLCapabilities caps = GL.getCapabilities();
-        if (caps.OpenGL45)
+        if (DSA_GL45(caps))
             return GL45.glUnmapNamedBuffer(buffer);
-        if (caps.GL_ARB_direct_state_access)
+        if (DSA_ARB(caps))
             return ARBDirectStateAccess.glUnmapNamedBuffer(buffer);
-        if (caps.GL_EXT_direct_state_access)
+        if (DSA_EXT(caps))
             return EXTDirectStateAccess.glUnmapNamedBufferEXT(buffer);
         return GL15.glUnmapBuffer(target);
     }
@@ -798,13 +812,12 @@ public final class GLAPI
     public static int createVertexArray()
     {
         final GLCapabilities caps = GL.getCapabilities();
-        if (caps.OpenGL45)
+        if (DSA_GL45(caps))
             return GL45.glCreateVertexArrays();
-        if (caps.GL_ARB_direct_state_access)
+        if (DSA_ARB(caps))
             return ARBDirectStateAccess.glCreateVertexArrays();
         final int handle = GL30.glGenVertexArrays();
         GL30.glBindVertexArray(handle);
-        GL30.glBindVertexArray(0);
         return handle;
     }
     
@@ -821,15 +834,15 @@ public final class GLAPI
     public static void enableVertexAttribArray(int vao, int index)
     {
         final GLCapabilities caps = GL.getCapabilities();
-        if (caps.OpenGL45)
+        if (DSA_GL45(caps))
         {
             GL45.glEnableVertexArrayAttrib(vao, index);
         }
-        else if (caps.GL_ARB_direct_state_access)
+        else if (DSA_ARB(caps))
         {
             ARBDirectStateAccess.glEnableVertexArrayAttrib(vao, index);
         }
-        else if (caps.GL_EXT_direct_state_access)
+        else if (DSA_EXT(caps))
         {
             EXTDirectStateAccess.glEnableVertexArrayAttribEXT(vao, index);
         }
@@ -843,15 +856,15 @@ public final class GLAPI
     public static void disableVertexAttribArray(int vao, int index)
     {
         final GLCapabilities caps = GL.getCapabilities();
-        if (caps.OpenGL45)
+        if (DSA_GL45(caps))
         {
             GL45.glDisableVertexArrayAttrib(vao, index);
         }
-        else if (caps.GL_ARB_direct_state_access)
+        else if (DSA_ARB(caps))
         {
             ARBDirectStateAccess.glDisableVertexArrayAttrib(vao, index);
         }
-        else if (caps.GL_EXT_direct_state_access)
+        else if (DSA_EXT(caps))
         {
             EXTDirectStateAccess.glDisableVertexArrayAttribEXT(vao, index);
         }

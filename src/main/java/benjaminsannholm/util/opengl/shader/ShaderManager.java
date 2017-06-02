@@ -1,9 +1,5 @@
 package benjaminsannholm.util.opengl.shader;
 
-import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.system.MemoryUtil.memAlloc;
-import static org.lwjgl.system.MemoryUtil.memFree;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,6 +21,7 @@ import java.util.Set;
 import org.apache.commons.io.IOUtils;
 import org.lwjgl.opengl.GL41;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,22 +40,22 @@ import gnu.trove.set.hash.THashSet;
 public class ShaderManager implements ShaderLoader
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(ShaderManager.class);
-    
+
     private static final boolean OUTPUT_DEBUG = true;
     private static final Path DEBUG_FOLDER_PATH = Paths.get("shader_program_debug");
-    
+
     private static final String VERSION_HEADER_PREFIX = "#version ";
-    
+
     private final ResourceLocator shaderLocator;
     private final String versionHeader;
-    
+
     private final Map<String, ShaderProgram> programs = new THashMap<>();
-    
+
     public ShaderManager(ResourceLocator shaderLocator, int version, boolean compatibility)
     {
         this.shaderLocator = Preconditions.checkNotNull(shaderLocator, "shaderLocator");
         versionHeader = VERSION_HEADER_PREFIX + version + (compatibility ? " compatibility" : "");
-        
+
         if (OUTPUT_DEBUG)
         {
             try
@@ -71,14 +68,14 @@ public class ShaderManager implements ShaderLoader
             }
         }
     }
-    
+
     public void clearPrograms()
     {
         for (ShaderProgram program : programs.values())
             program.dispose();
         programs.clear();
     }
-    
+
     public ShaderProgram getProgram(String name)
     {
         ShaderProgram program = programs.get(name);
@@ -89,12 +86,12 @@ public class ShaderManager implements ShaderLoader
                 final Optional<String> vertexSource = getComposedShaderSource(name + "_vert");
                 final Optional<String> fragmentSource = getComposedShaderSource(name + "_frag");
                 final Optional<String> computeSource = getComposedShaderSource(name + "_comp");
-                
+
                 if (!vertexSource.isPresent() && !fragmentSource.isPresent() && !computeSource.isPresent())
                     throw new IOException("No shader files found");
-                
+
                 outputDebugSources(name, vertexSource, fragmentSource, computeSource);
-                
+
                 final Set<Shader> shaders = new THashSet<>();
                 try
                 {
@@ -104,7 +101,7 @@ public class ShaderManager implements ShaderLoader
                         shaders.add(new Shader(Type.FRAGMENT, fragmentSource.get()));
                     if (computeSource.isPresent())
                         shaders.add(new Shader(Type.COMPUTE, computeSource.get()));
-                    
+
                     final ShaderProgramConfig config = getProgramConfig(name);
                     program = new ShaderProgram(shaders, config.vertexInputs, config.fragmentOutputs);
                 }
@@ -113,7 +110,7 @@ public class ShaderManager implements ShaderLoader
                     for (Shader shader : shaders)
                         shader.dispose();
                 }
-                
+
                 outputDebugBinary(program, name);
             }
             catch (ShaderCompilationException | ShaderProgramLinkException | IOException e)
@@ -121,12 +118,12 @@ public class ShaderManager implements ShaderLoader
                 LOGGER.error("Failed to load shader program " + name, e);
                 program = new DummyShaderProgram();
             }
-            
+
             programs.put(name, program);
         }
         return program;
     }
-    
+
     private Optional<String> getComposedShaderSource(String name) throws IOException
     {
         String baseSource = null;
@@ -138,13 +135,13 @@ public class ShaderManager implements ShaderLoader
         {
             return Optional.empty();
         }
-        
+
         return Optional.of(new ShaderComposer(this)
                 .append(versionHeader)
                 .append(baseSource)
                 .compose());
     }
-    
+
     @Override
     public String getShaderSource(String path) throws IOException
     {
@@ -153,9 +150,9 @@ public class ShaderManager implements ShaderLoader
             return IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
     }
-    
+
     private static final Gson GSON = new Gson();
-    
+
     private ShaderProgramConfig getProgramConfig(String path)
     {
         try (Reader reader = new BufferedReader(new InputStreamReader(shaderLocator.locate(path + ".json").openStream(), StandardCharsets.UTF_8)))
@@ -167,13 +164,13 @@ public class ShaderManager implements ShaderLoader
             return new ShaderProgramConfig();
         }
     }
-    
+
     private static class ShaderProgramConfig
     {
         public List<String> vertexInputs = ImmutableList.of("in_position");
         public List<String> fragmentOutputs = ImmutableList.of("out_color");
     }
-    
+
     private void outputDebugSources(String name, Optional<String> vertexSource, Optional<String> fragmentSource, Optional<String> computeSource)
     {
         if (OUTPUT_DEBUG)
@@ -193,20 +190,20 @@ public class ShaderManager implements ShaderLoader
             }
         }
     }
-    
+
     private void outputDebugBinary(ShaderProgram program, String name)
     {
         if (OUTPUT_DEBUG)
         {
-            final ByteBuffer binary = memAlloc(GLAPI.getProgrami(program.getHandle(), GL41.GL_PROGRAM_BINARY_LENGTH));
-            try (MemoryStack stack = stackPush())
+            final ByteBuffer binary = MemoryUtil.memAlloc(GLAPI.getProgrami(program.getHandle(), GL41.GL_PROGRAM_BINARY_LENGTH));
+            try (MemoryStack stack = MemoryStack.stackPush())
             {
                 final IntBuffer length = stack.mallocInt(1);
                 final IntBuffer format = stack.mallocInt(1);
-                
+
                 program.getBinary(length, format, binary);
                 binary.limit(length.get(0));
-                
+
                 try (FileChannel channel = FileChannel.open(DEBUG_FOLDER_PATH.resolve(name + ".bin"), StandardOpenOption.WRITE, StandardOpenOption.CREATE))
                 {
                     channel.write(binary);
@@ -218,7 +215,7 @@ public class ShaderManager implements ShaderLoader
             }
             finally
             {
-                memFree(binary);
+                MemoryUtil.memFree(binary);
             }
         }
     }

@@ -1,7 +1,5 @@
 package benjaminsannholm.util.opengl.shader;
 
-import static org.lwjgl.system.MemoryStack.stackPush;
-
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.List;
@@ -84,53 +82,9 @@ public class ShaderProgram extends GraphicsObject
         GLAPI.deleteProgram(getHandle());
     }
     
-    public void getBinary(IntBuffer length, IntBuffer format, ByteBuffer binary)
-    {
-        GLAPI.getProgramBinary(getHandle(), length, format, binary);
-    }
-    
-    private void fetchWorkgroupSize()
-    {
-        try (MemoryStack stack = stackPush())
-        {
-            final IntBuffer values = stack.mallocInt(3);
-            GLAPI.getProgramiv(getHandle(), GL43.GL_COMPUTE_WORK_GROUP_SIZE, values);
-            
-            workgroupSizeX = values.get(0);
-            workgroupSizeY = values.get(1);
-            workgroupSizeZ = values.get(2);
-        }
-    }
-    
-    public int getWorkgroupSizeX()
-    {
-        if (workgroupSizeX == -1)
-            fetchWorkgroupSize();
-        return workgroupSizeX;
-    }
-    
-    public int getWorkgroupSizeY()
-    {
-        if (workgroupSizeY == -1)
-            fetchWorkgroupSize();
-        return workgroupSizeY;
-    }
-    
-    public int getWorkgroupSizeZ()
-    {
-        if (workgroupSizeZ == -1)
-            fetchWorkgroupSize();
-        return workgroupSizeZ;
-    }
-    
     public void use()
     {
         GLAPI.useProgram(getHandle());
-    }
-    
-    public static void unuse()
-    {
-        GLAPI.useProgram(0);
     }
     
     public <T> void setUniform(String name, T value)
@@ -161,6 +115,45 @@ public class ShaderProgram extends GraphicsObject
     public void dispatchCompute(int numGroupsX, int numGroupsY, int numGroupsZ)
     {
         GLAPI.dispatchCompute(numGroupsX, numGroupsY, numGroupsZ);
+    }
+
+    public void getBinary(IntBuffer length, IntBuffer format, ByteBuffer binary)
+    {
+        GLAPI.getProgramBinary(getHandle(), length, format, binary);
+    }
+
+    private void fetchWorkgroupSize()
+    {
+        try (MemoryStack stack = MemoryStack.stackPush())
+        {
+            final IntBuffer values = stack.mallocInt(3);
+            GLAPI.getProgramiv(getHandle(), GL43.GL_COMPUTE_WORK_GROUP_SIZE, values);
+
+            workgroupSizeX = values.get(0);
+            workgroupSizeY = values.get(1);
+            workgroupSizeZ = values.get(2);
+        }
+    }
+
+    public int getWorkgroupSizeX()
+    {
+        if (workgroupSizeX == -1)
+            fetchWorkgroupSize();
+        return workgroupSizeX;
+    }
+
+    public int getWorkgroupSizeY()
+    {
+        if (workgroupSizeY == -1)
+            fetchWorkgroupSize();
+        return workgroupSizeY;
+    }
+
+    public int getWorkgroupSizeZ()
+    {
+        if (workgroupSizeZ == -1)
+            fetchWorkgroupSize();
+        return workgroupSizeZ;
     }
     
     public static class ShaderProgramLinkException extends RuntimeException

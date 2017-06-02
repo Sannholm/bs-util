@@ -1,11 +1,9 @@
 package benjaminsannholm.util.opengl.shader.uniforms;
 
-import static org.lwjgl.system.MemoryStack.stackPush;
-
 import java.nio.IntBuffer;
 import java.util.Arrays;
 
-import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 
 import benjaminsannholm.util.opengl.GLAPI;
 import benjaminsannholm.util.opengl.shader.ShaderProgram;
@@ -33,12 +31,16 @@ public class IntArrayUniform extends Uniform<int[]>
     @Override
     protected void upload(int[] value)
     {
-        try (MemoryStack stack = stackPush())
+        final IntBuffer buffer = MemoryUtil.memAllocInt(value.length);
+        try
         {
-            final IntBuffer buffer = stack.mallocInt(value.length);
             buffer.put(value);
             buffer.flip();
             GLAPI.setUniform1iv(getParent().getHandle(), getLocation(), buffer);
+        }
+        finally
+        {
+            MemoryUtil.memFree(buffer);
         }
     }
 }

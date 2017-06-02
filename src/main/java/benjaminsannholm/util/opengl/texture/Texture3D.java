@@ -35,7 +35,7 @@ public class Texture3D extends Texture
     protected void create()
     {
         super.create();
-        GLAPI.initTextureImage(getHandle(), getType().getTarget(), getLevels(), getFormat().getInternalFormat(), getWidth(), getHeight(), getDepth());
+        GLAPI.initTextureImage(getHandle(), getType().getEnum(), getLevels(), getFormat().getInternalFormat(), getWidth(), getHeight(), getDepth());
         uploadParameters();
     }
     
@@ -48,9 +48,9 @@ public class Texture3D extends Texture
     protected void uploadParameters()
     {
         super.uploadParameters();
-        GLAPI.setTextureParameteri(getHandle(), getType().getTarget(), GL11.GL_TEXTURE_WRAP_S, getWrapS().getEnum());
-        GLAPI.setTextureParameteri(getHandle(), getType().getTarget(), GL11.GL_TEXTURE_WRAP_T, getWrapT().getEnum());
-        GLAPI.setTextureParameteri(getHandle(), getType().getTarget(), GL12.GL_TEXTURE_WRAP_R, getWrapU().getEnum());
+        GLAPI.setTextureParameteri(getHandle(), getType().getEnum(), GL11.GL_TEXTURE_WRAP_S, getWrapS().getEnum());
+        GLAPI.setTextureParameteri(getHandle(), getType().getEnum(), GL11.GL_TEXTURE_WRAP_T, getWrapT().getEnum());
+        GLAPI.setTextureParameteri(getHandle(), getType().getEnum(), GL12.GL_TEXTURE_WRAP_R, getWrapU().getEnum());
     }
     
     @Override
