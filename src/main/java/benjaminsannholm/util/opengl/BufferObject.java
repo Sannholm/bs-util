@@ -1,34 +1,65 @@
 package benjaminsannholm.util.opengl;
 
 import java.nio.ByteBuffer;
+import java.util.Set;
 
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL43;
+import org.lwjgl.opengl.GL44;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 
 public class BufferObject extends GraphicsObject
 {
     private final Type type;
     private final int size;
-    private final Usage usage;
-
-    public BufferObject(Type type, int size, Usage usage)
+    private ByteBuffer data;
+    private final Set<Flag> flags;
+    
+    private BufferObject(Type type, int size, ByteBuffer data, Iterable<Flag> flags)
     {
         this.type = Preconditions.checkNotNull(type, "type");
         Preconditions.checkArgument(size > 0, "Size cannot be <= 0");
         this.size = size;
-        this.usage = Preconditions.checkNotNull(usage, "usage");
-
+        this.data = data;
+        this.flags = Sets.immutableEnumSet(Preconditions.checkNotNull(flags, "flags"));
+        
         create();
+    }
+
+    public BufferObject(Type type, int size, Iterable<Flag> flags)
+    {
+        this(type, size, null, flags);
+    }
+    
+    public BufferObject(Type type, int size)
+    {
+        this(type, size, ImmutableSet.of());
+    }
+
+    public BufferObject(Type type, ByteBuffer data, Iterable<Flag> flags)
+    {
+        this(type, data.remaining(), data, flags);
+    }
+
+    public BufferObject(Type type, ByteBuffer data)
+    {
+        this(type, data, ImmutableSet.of());
     }
 
     @Override
     protected void create()
     {
         setHandle(GLAPI.createBuffer());
-        GLAPI.initBufferData(getHandle(), getType().getEnum(), getSize(), getUsage().getEnum());
+
+        int flags = 0;
+        for (Flag flag : getFlags())
+            flags |= flag.getEnum();
+        GLAPI.initBufferData(getHandle(), getType().getEnum(), getSize(), data, flags);
+        data = null;
     }
 
     @Override
@@ -82,9 +113,9 @@ public class BufferObject extends GraphicsObject
         return size;
     }
 
-    public Usage getUsage()
+    public Set<Flag> getFlags()
     {
-        return usage;
+        return flags;
     }
     
     public static enum Type implements GLAPIEnum
@@ -106,15 +137,18 @@ public class BufferObject extends GraphicsObject
         }
     }
 
-    public static enum Usage implements GLAPIEnum
+    public static enum Flag implements GLAPIEnum
     {
-        STATIC_DRAW(GL15.GL_STATIC_DRAW),
-        DYNAMIC_DRAW(GL15.GL_DYNAMIC_DRAW),
-        STREAM_DRAW(GL15.GL_STREAM_DRAW);
+        MAP_READ(GL30.GL_MAP_READ_BIT),
+        MAP_WRITE(GL30.GL_MAP_WRITE_BIT),
+        MAP_PERSISTENT(GL44.GL_MAP_PERSISTENT_BIT),
+        MAP_COHERENT(GL44.GL_MAP_COHERENT_BIT),
+        DYNAMIC_STORAGE(GL44.GL_DYNAMIC_STORAGE_BIT),
+        CLIENT_STORAGE(GL44.GL_CLIENT_STORAGE_BIT);
 
         private final int glEnum;
 
-        private Usage(int glEnum)
+        private Flag(int glEnum)
         {
             this.glEnum = glEnum;
         }

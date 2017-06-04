@@ -24,13 +24,13 @@ public final class GeometryRenderer
         {
             final VertexAttribute attribute = attributes.get(i);
             
-            GLAPI.enableVertexAttribArray(GLOBAL_VAO.getHandle(), i);
+            GLAPI.enableVertexArrayAttrib(GLOBAL_VAO.getHandle(), i);
             GLAPI.setVertexAttribPointer(GLOBAL_VAO.getHandle(), i, attribute.getCount(), attribute.getDataType().getEnum(), attribute.shouldNormalize(), format.getBytesPerVertex(), format.getOffset(i));
         }
         
         GLAPI.drawArrays(mode.getEnum(), start, count);
         
         for (int i = 0; i < attributes.size(); i++)
-            GLAPI.disableVertexAttribArray(GLOBAL_VAO.getHandle(), i);
+            GLAPI.disableVertexArrayAttrib(GLOBAL_VAO.getHandle(), i);
     }
 }
