@@ -35,7 +35,7 @@ public class Texture3D extends Texture
     protected void create()
     {
         super.create();
-        GLAPI.initTextureImage(getHandle(), getType().getEnum(), getLevels(), getFormat().getInternalFormat(), getWidth(), getHeight(), getDepth());
+        GLAPI.initTextureImage(getHandle(), getType().getEnum(), getLevels(), getFormat().getEnum(), getWidth(), getHeight(), getDepth());
         uploadParameters();
     }
     

@@ -31,7 +31,7 @@ public class Texture2D extends Texture
     protected void create()
     {
         super.create();
-        GLAPI.initTextureImage(getHandle(), getType().getEnum(), getLevels(), getFormat().getInternalFormat(), getWidth(), getHeight(), 0);
+        GLAPI.initTextureImage(getHandle(), getType().getEnum(), getLevels(), getFormat().getEnum(), getWidth(), getHeight(), 0);
         uploadParameters();
     }
     
